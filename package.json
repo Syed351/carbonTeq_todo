@@ -1,0 +1,41 @@
+{
+  "name": "carbonteq_todo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "drizzle:push": "drizzle-kit push",
+    "drizzle:studio": "drizzle-kit studio",
+    "drizzle:generate": "drizzle-kit generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.0.7",
+    "@types/pg": "^8.15.4",
+    "drizzle-kit": "^0.31.4"
+  }
+}
