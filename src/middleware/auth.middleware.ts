@@ -2,11 +2,10 @@ import ApiError from '../utils/ApiErrors';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../schema/user.schema';
+import { Roles } from '../schema/roles.schema';
 import {eq} from "drizzle-orm";
 import { asyncHandler } from '../utils/asyncHandler';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
+import { db } from '../db'; 
 declare global {
   namespace Express {
     interface Request {
@@ -14,10 +13,6 @@ declare global {
     }
   }
 }
-
-const client = postgres(process.env.DATABASE_URL!);
-export const db = drizzle(client);
-
 export const verifyJWT = asyncHandler (async (req: Request, res: Response, next: NextFunction) => {
 try{
     const token = req.cookies.accessToken || req.header("Authorization")?.replace("Bearer ", "");
@@ -28,8 +23,14 @@ try{
     const decodedToken = jwt.verify(token,process.env.JWT_SECRET!)
 
     const user = await db
-    .select()
+    .select({
+      id: User.id,
+      name: User.name,
+      email: User.email,
+      role: Roles.name
+    })
     .from(User)
+    .innerJoin(Roles, eq(User.roleId, Roles.id))
     .where(eq(User.id, (decodedToken as any).id))
 
     if (!user ){

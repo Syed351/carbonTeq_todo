@@ -6,10 +6,10 @@ import ApiError from "../utils/ApiErrors";
 import {v4 as uuidv4} from 'uuid';
 import { docValidate } from "../validations/docValidate.validate";
 import {User} from "../schema/user.schema"
-import { eq, sql , and} from "drizzle-orm";
+import { eq, ilike , and} from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import db from '../db'
+import {db} from '../db'
 import path, { relative } from "path";
 
 
@@ -41,6 +41,9 @@ const relativePath = path.join('uploads', file.filename);
     res.status(201).json (
         new ApiResponse(201,"Document Uploaded Successfully")
     )
+    console.log("Saved filename:", file.filename);
+console.log("Saved relative path:", relativePath);
+
 })
 
 const getDocuments = asyncHandler(async(req:Request,res:Response)=>{
@@ -106,10 +109,7 @@ if(!document){
     throw new ApiError(404,"Document not Found")
 }
 
-if(document.userId !== user.id){
-    throw new ApiError(403,"You are not allowed to delete this document");
-
-}
+if(document.userId === user.id || user.role === "Admin"){
 try{
     fs.unlinkSync(document.path);
 
@@ -130,6 +130,7 @@ return res
     "Document deleted Successfully"
 )
 )
+}
 });
 
 const updateDocument = asyncHandler(async (req:Request , res:Response ) =>{
@@ -154,11 +155,7 @@ const updateDocument = asyncHandler(async (req:Request , res:Response ) =>{
     throw new ApiError (404 , "Document not found ");
 
   }
-
-  if(document.userId !== user.id){
-    throw new ApiError (404,"You are not Allowed to change the document data")
-  }
-
+  
   let updatePath = file?.path;
 
   if(file?.path){
@@ -254,34 +251,48 @@ const safeFileName = rawFileName.replace(/[\r\n\"<>]/g, "_").replace(/\s+/g, "_"
     fileStream.pipe(res);
 
   } catch (err) {
-    throw new ApiError(401, "Invalid or expired download link");
+    if (err instanceof jwt.TokenExpiredError) {
+    throw new ApiError(401, "Download link expired");
+  }
+  if (err instanceof jwt.JsonWebTokenError) {
+    throw new ApiError(401, "Invalid download link");
+  }
+  console.error("Unexpected download error:", err);
+  throw new ApiError(500, "Something went wrong");
+
+   
   }
 });
 
-const searchDocument = asyncHandler(async(req: Request , res:Response)=>{
-    const {tags} = req.query;
-    const conditions:any[]=[];
 
-    if(tags){
-        const tagsArray = typeof tags === 'string' ? tags.split(',') : [];
-        if(tagsArray.length > 0){
-            conditions.push(sql`${Documents.tags} && ${tagsArray}`);
-        }
+const searchDocument = asyncHandler(async (req: Request, res: Response) => {
+  const { tags } = req.query;
+  const conditions: any[] = [];
+
+  if (tags) {
+    const tagsArray = typeof tags === "string"
+      ? tags.split(",").map(tag => tag.trim().toLowerCase())
+      : [];
+
+    if (tagsArray.length > 0) {
+      const likeConditions = tagsArray.map(tag =>
+        ilike(Documents.tags, `%${tag}%`)
+      );
+
+      // ✅ Must match ALL tags (AND condition)
+      conditions.push(...likeConditions);
     }
-    const results = await db
+  }
+
+  const documents = await db
     .select()
     .from(Documents)
     .where(conditions.length > 0 ? and(...conditions) : undefined);
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(
-            200,
-            results,
-            "Search Results"
-        )
-    )
-})
+
+  return res.status(200).json(
+    new ApiResponse(200, documents, "Search Results")
+  );
+});
 
 
 export {

@@ -7,7 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
 
 import userRoutes from './routes/user.route';
 

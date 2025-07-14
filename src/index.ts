@@ -2,8 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config({
   path: './.env',
 });
-import express from 'express';
-import  db from './db/index';
+import  {db}from './db';
 import { app }from './app';
 const PORT = process.env.PORT || 3000;
 

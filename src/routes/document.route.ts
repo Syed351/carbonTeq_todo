@@ -10,22 +10,26 @@ import {
 } from '../controllers/document.controller';
 import { upload } from '../middleware/multer.middleware';
 import { verifyJWT } from '../middleware/auth.middleware';
+import { rbacWithPermissions } from '../middleware/rbac';
 
 const router = Router();
 
 router.route('/upload').post(
     verifyJWT,
+    rbacWithPermissions("create"),
     upload.single('file'),
     uploadDocument
 );
 
-router.route("/read").get(verifyJWT,getDocuments)
+router.route("/read").get(verifyJWT,rbacWithPermissions("read"),getDocuments)
 
 router.route("/:id")
-.delete(verifyJWT,deleteDocument)
-.patch(verifyJWT,upload.single("file"),updateDocument);
+.delete(verifyJWT,rbacWithPermissions("delete"),deleteDocument)
+.patch(verifyJWT,rbacWithPermissions("update"),upload.single("file"),updateDocument);
 
 router.route("/generate-download/:id").get(verifyJWT,generateDownloadLink);
+
 router.route("/download/:token").get(downloadDocument);
-router.route("/search").get(verifyJWT,searchDocument)
+
+router.route("/search").get(verifyJWT,searchDocument);
 export default router;

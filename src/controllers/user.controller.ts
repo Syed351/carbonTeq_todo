@@ -1,6 +1,7 @@
 import {Request , Response, NextFunction} from "express";
 import { User } from "../schema/user.schema";
-import {eq, ne} from "drizzle-orm";
+import { Roles } from "../schema/roles.schema";
+import {eq} from "drizzle-orm";
 import bcrypt from 'bcrypt';
 import { generateTokens ,
      generateAcessToken ,
@@ -9,10 +10,12 @@ import ApiError from "../utils/ApiErrors";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import jwt from 'jsonwebtoken';
-import db from '../db'
+import {db} from '../db'
 
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, password ,role } = req.body;
+    const { name, email, password ,role} = req.body;
+    console.log("Incoming body:", req.body);
+  console.log("Content-Type:", req.headers['content-type']);
 
     if(!name || !email || !password || !role) {
         throw new ApiError(404, "Name, email, password and role are required fields")
@@ -35,14 +38,20 @@ if(existedUser) {
 try{
 const hashedPassword = await bcrypt.hash(password, 10);
 
+
+ const [userRole] = await db
+    .select()
+    .from(Roles)
+    .where(eq(Roles.name, role));
+
 await db
 .insert(User)
 .values({
     name,
     email,
     password: hashedPassword,
-    role,
-    refreshToken: ""
+    roleId:userRole.id,
+    refreshToken: " "
 
 });
 return res
@@ -53,19 +62,27 @@ new ApiResponse(
         ))
 } catch (error) {
     console.error("Error registering user:", error);
+     throw new ApiError(500, "Internal server error while registering");
 }
 });
 
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    const result = await db
-        .select()
-        .from(User)
-        .where(eq(User.email, email))
-        .limit(1);
+   const [user] = await db
+   .select({
+    id: User.id,
+    name: User.name,
+    email: User.email,
+    password: User.password,
+    role: Roles.name,
+   })
+   .from(User)
+   .innerJoin(Roles, eq(User.roleId, Roles.id))
+   .where(eq(User.email, email))
+   .limit(1);
 
-   const user = result[0];
+
     if (!user) {
         throw new ApiError(400, "User not found with this email");
     }

@@ -1,6 +1,7 @@
 import {pgTable , uuid , varchar , text ,timestamp , json} from "drizzle-orm/pg-core";
 import { User } from "./user.schema";
 
+
 export const Documents = pgTable ("documents",{
 
     id : uuid("id").primaryKey().notNull(),

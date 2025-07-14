@@ -5,9 +5,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn src/index.ts",
+    "seed": "ts-node src/seeds/seed.ts",
     "drizzle:push": "drizzle-kit push",
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:generate": "drizzle-kit generate"
+
   },
   "keywords": [],
   "author": "",

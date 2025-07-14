@@ -1,5 +1,5 @@
 class ApiResponse {
-    statusCode: number;
+  statusCode: number;
   data: any;
   message: string;
   success: boolean;
