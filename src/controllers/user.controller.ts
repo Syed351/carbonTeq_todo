@@ -1,213 +1,92 @@
-import {Request , Response, NextFunction} from "express";
-import { User } from "../schema/user.schema";
-import { Roles } from "../schema/roles.schema";
-import {eq} from "drizzle-orm";
-import bcrypt from 'bcrypt';
-import { generateTokens ,
-     generateAcessToken ,
-     generateRefreshToken } from '../utils/jwt';
-import ApiError from "../utils/ApiErrors";
-import { ApiResponse } from "../utils/ApiResponse";
+import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import jwt from 'jsonwebtoken';
-import {db} from '../db'
+import { ApiResponse } from "../utils/ApiResponse";
+import ApiError from "../utils/ApiErrors";
+import {
+  registerUserService,
+  loginUserService,
+  logoutUserService,
+  refreshAccessTokenService
+} from "../services/user.service";
 
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, password ,role} = req.body;
-    console.log("Incoming body:", req.body);
-  console.log("Content-Type:", req.headers['content-type']);
+import { RegisterDTO, RegisterInput, LoginDTO, LoginInput } from "../dtos/user.dto";
 
-    if(!name || !email || !password || !role) {
-        throw new ApiError(404, "Name, email, password and role are required fields")
+// Register Controller
+ const registerUser = asyncHandler(async (req: Request, res: Response) => {
+  const parsed = RegisterDTO.safeParse(req.body);
+  if (!parsed.success) throw new ApiError(400, "Invalid registration data");
 
-    }
+  const data: RegisterInput = parsed.data;
+  await registerUserService(data);
 
-const result = await db
-  .select()
-  .from(User)
-  .where(eq(User.email, email))
-  .limit(1);
-  
-
-const existedUser = result[0] ;
-
-if(existedUser) {
-    throw new ApiError(404, "User already exists with this email")
-}
-
-try{
-const hashedPassword = await bcrypt.hash(password, 10);
-
-
- const [userRole] = await db
-    .select()
-    .from(Roles)
-    .where(eq(Roles.name, role));
-
-await db
-.insert(User)
-.values({
-    name,
-    email,
-    password: hashedPassword,
-    roleId:userRole.id,
-    refreshToken: " "
-
-});
-return res
-.json(
-new ApiResponse(
-            200,   
-            "Registered Successfully"
-        ))
-} catch (error) {
-    console.error("Error registering user:", error);
-     throw new ApiError(500, "Internal server error while registering");
-}
+  return res.status(201).json(new ApiResponse(201, {}, "Registered Successfully"));
 });
 
-const loginUser = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+// Login Controller
+ const loginUser = asyncHandler(async (req: Request, res: Response) => {
+  const parsed = LoginDTO.safeParse(req.body);
+  if (!parsed.success) throw new ApiError(400, "Invalid login data");
 
-   const [user] = await db
-   .select({
-    id: User.id,
-    name: User.name,
-    email: User.email,
-    password: User.password,
-    role: Roles.name,
-   })
-   .from(User)
-   .innerJoin(Roles, eq(User.roleId, Roles.id))
-   .where(eq(User.email, email))
-   .limit(1);
+  const data: LoginInput = parsed.data;
+  const { user, accessToken, refreshToken } = await loginUserService(data);
 
+  const options = { httpOnly: true, secure: true };
 
-    if (!user) {
-        throw new ApiError(400, "User not found with this email");
-    }
-
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-
-    if (!isPasswordValid) {
-
-      throw new ApiError(400, "Invalid password");
-
-    }
-
-    const { accessToken, refreshToken } = generateTokens(user);
-    
-    await db
-    .update(User)
-    .set({ refreshToken })
-    .where(eq(User.id, user.id));
-
-    const options ={
-        httpOnly:true,
-        secure:true,
-
-    }
-
-return res
-    .cookie('accessToken', accessToken, options)
-    .cookie('refreshToken', refreshToken, options )
+  return res
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .status(200)
     .json(
-        new ApiResponse(
-            200, 
-            {
-                user:{
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role
-                }, 
-                accessToken,
-                refreshToken
-            },
-            "User logged In Successfully"
-        ));
+      new ApiResponse(200, {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        accessToken,
+        refreshToken,
+      }, "Login successful")
+    );
 });
 
+// Refresh Access Token Controller
+ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
 
-const refreshAccessToken = asyncHandler (async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
+  const { accessToken, refreshToken: newRefreshToken } =
+    await refreshAccessTokenService(refreshToken);
 
-    if(!refreshToken){
-        throw new ApiError(401, "Refresh Token not found ");
-    }
-let decoded;
-    try{
-         decoded = jwt.verify(refreshToken , process.env.REFRESH_TOKEN_SECRET!) as { id : string};
+  const options = { httpOnly: true, secure: true };
 
-    } catch (error){
-        throw new ApiError(401,"Invalid Refresh Token");
-    }
+  return res
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newRefreshToken, options)
+    .status(200)
+    .json(
+      new ApiResponse(200, {
+        accessToken,
+        refreshToken: newRefreshToken,
+      }, "Access Token refreshed successfully")
+    );
+});
 
-    const [user] = await db
-        .select()
-        .from(User)
-        .where(eq(User.id, decoded.id))
-        .limit(1);
+// Logout Controller
+ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+  await logoutUserService(req.user.id);
 
-        if(!user ){
-            throw new ApiError(401, "User not found");
-        }
+  const options = { httpOnly: true, secure: true };
 
-        if(user.refreshToken !== refreshToken){
-            throw new ApiError(401, "Invalid Refresh Token");
-        }
+  return res
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .status(200)
+    .json(new ApiResponse(200, {}, "User logged out"));
+});
 
-        const newAccessToken = generateAcessToken(user.id, user.name, user.email);
-        const newRefreshToken = generateRefreshToken(user.id);
-
-        await db 
-        .update(User)
-        .set({ refreshToken: newRefreshToken })
-        .where(eq(User.id, user.id));
-
-    const options = {
-        httpOnly: true,
-        secure: true
-    };
-
-    return res
-        .cookie('accessToken', newAccessToken, options)
-        .cookie('refreshToken', newRefreshToken, options)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    accessToken: newAccessToken,
-                    refreshToken: newRefreshToken
-                },
-                "Access Token refreshed successfully"
-            )
-        );
-            
-})
-
-
-
-const logoutUser = asyncHandler (async (req: Request, res: Response) => { 
-   const result = await db
-        .update(User)
-        .set({ refreshToken: "" })
-        .where(eq(User.id, req.user.id));
-
-        const options = {
-             httpOnly : true,
-             secure : true
-        }
-        
-        return res
-        .status(200)
-        .clearCookie('refreshToken', options)
-        .clearCookie('accessToken',options )
-        .json (new ApiResponse (200,{},"User logged Out"))
-})
-
-
-
-export { registerUser , loginUser,logoutUser , refreshAccessToken };
+export {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logoutUser
+};

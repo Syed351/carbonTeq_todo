@@ -8,13 +8,13 @@ import {
 } from '../controllers/user.controller';
 import { verifyJWT } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { UserSchema } from '../validations/validate.schema';
+import { registerUserSchema, UserSchema } from '../validations/validate.schema';
 
 
 
 const router = Router();
 
-router.route('/register').post(registerUser);
+router.route('/register').post(validate(registerUserSchema),registerUser);
 
 router.route('/login').post(validate(UserSchema),loginUser);
 
