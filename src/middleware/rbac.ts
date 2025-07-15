@@ -4,7 +4,7 @@ import { Documents } from "../schema/document.schema";
 import { Roles } from "../schema/roles.schema";
 import { Permissions } from "../schema/permission.schema";
 import { eq, and } from "drizzle-orm";
-import ApiError from "../utils/ApiErrors";
+import {ApiError} from "../utils/ApiErrors";
 import { asyncHandler } from "../utils/asyncHandler";
 
 type AllowedPermissionKey = "create" | "read" | "update" | "delete";

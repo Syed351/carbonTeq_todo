@@ -1,91 +1,90 @@
-import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { db } from "../db";
-import { User } from "../schema/user.schema";
-import { Roles } from "../schema/roles.schema";
-import ApiError from "../utils/ApiErrors";
+import { IUserLogin, IUserRegister, IUserResponse } from "../interface/user.interface";
+import { ApiError } from "../utils/ApiErrors";
 import { generateTokens, generateAcessToken, generateRefreshToken } from "../utils/jwt";
-import { RegisterInput, LoginInput } from "../dtos/user.dto";
+import { IUserRepository } from "../repositories/user.repository";
+import { IRoleRepository } from "../repositories/userRole.repository";
 
+export class UserService {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly roleRepo: IRoleRepository
+  ) {}
 
-const registerUserService = async (input: RegisterInput) => {
-  const { name, email, password, role } = input;
+  async registerUser(data: IUserRegister): Promise<void> {
+    const { name, email, password, role } = data;
 
-  const [existingUser] = await db.select().from(User).where(eq(User.email, email));
-  if (existingUser) throw new ApiError(400, "User already exists");
+    const existingUser = await this.userRepo.findByEmail(email);
+    if (existingUser) throw new ApiError(400, "User already exists");
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const [userRole] = await db.select().from(Roles).where(eq(Roles.name, role));
+    const roleRecord = await this.roleRepo.findByName(role);
+    if (!roleRecord) throw new ApiError(400, `Role "${role}" not found`);
 
-  await db.insert(User).values({
-    name,
-    email,
-    password: hashedPassword,
-    roleId: userRole.id,
-    refreshToken: "",
-  });
-};
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-
-const loginUserService = async (input: LoginInput) => {
-  const { email, password } = input;
-
-  const [user] = await db
-    .select({
-      id: User.id,
-      name: User.name,
-      email: User.email,
-      password: User.password,
-      role: Roles.name,
-    })
-    .from(User)
-    .innerJoin(Roles, eq(User.roleId, Roles.id))
-    .where(eq(User.email, email));
-
-  if (!user) throw new ApiError(400, "User not found");
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) throw new ApiError(400, "Invalid password");
-
-  const tokens = generateTokens(user);
-
-  await db.update(User).set({ refreshToken: tokens.refreshToken }).where(eq(User.id, user.id));
-
-  return { user, ...tokens };
-};
-
-
-const refreshAccessTokenService = async (refreshToken: string) => {
-  if (!refreshToken) throw new ApiError(401, "Refresh Token not found");
-
-  let decoded;
-  try {
-    decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as { id: string };
-  } catch {
-    throw new ApiError(401, "Invalid Refresh Token");
+    await this.userRepo.insert({
+      name,
+      email,
+      password: hashedPassword,
+      roleId: roleRecord.id,
+      refreshToken: "",
+      id: crypto.randomUUID() // or let DB default generate it
+    });
   }
 
-  const [user] = await db.select().from(User).where(eq(User.id, decoded.id)).limit(1);
-  if (!user) throw new ApiError(401, "User not found");
-  if (user.refreshToken !== refreshToken) throw new ApiError(401, "Invalid Refresh Token");
+  async loginUser(data: IUserLogin): Promise<IUserResponse> {
+    const { email, password } = data;
 
-  const newAccessToken = generateAcessToken(user.id, user.name, user.email);
-  const newRefreshToken = generateRefreshToken(user.id);
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) throw new ApiError(400, "User not found");
 
-  await db.update(User).set({ refreshToken: newRefreshToken }).where(eq(User.id, user.id));
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw new ApiError(400, "Invalid password");
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
-};
+    const { accessToken, refreshToken } = generateTokens({id: user.id, name: user.name, email: user.email });
 
+    await this.userRepo.updateRefreshToken(user.id, refreshToken);
 
-const logoutUserService = async (userId: string) => {
-  await db.update(User).set({ refreshToken: "" }).where(eq(User.id, userId));
-};
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role:" ",
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
 
+  async refreshAccessToken(token: string): Promise<IUserResponse> {
+    if (!token) throw new ApiError(401, "Refresh token not found");
 
-export{
-registerUserService,
-loginUserService,
-refreshAccessTokenService,
-logoutUserService
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!) as { id: string };
+    const user = await this.userRepo.findById(decoded.id);
+
+    if (!user) throw new ApiError(401, "User not found");
+    if (user.refreshToken !== token) throw new ApiError(401, "Invalid refresh token");
+
+    const newAccessToken = generateAcessToken(user.id, user.name, user.email);
+    const newRefreshToken = generateRefreshToken(user.id);
+
+    await this.userRepo.updateRefreshToken(user.id, newRefreshToken);
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: "User",
+      },
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async logoutUser(userId: string): Promise<void> {
+    await this.userRepo.updateRefreshToken(userId, "");
+  }
 }

@@ -14,10 +14,10 @@ import { rbacWithPermissions } from '../middleware/rbac';
 import { validate } from "../middleware/validate.middleware";
 import { validateQuery } from '../middleware/validate.middleware';
 import {
-     createDocSchema,
-  updateDocSchema,
-  searchDocSchema
-} from '../validations/docValidate.validate';
+     createDTO,
+     updateDTO,
+     searchDTO
+} from '../dtos/document.dto';
 
 const router = Router();
 
@@ -25,7 +25,7 @@ router.route('/upload').post(
     verifyJWT,
     rbacWithPermissions("create"),
     upload.single('file'),
-    validate(createDocSchema),
+    validate(createDTO),
     uploadDocument
 );
 
@@ -36,7 +36,7 @@ router.route("/:id")
 .patch(verifyJWT,
     rbacWithPermissions("update"),
     upload.single("file"),
-    validate(updateDocSchema),
+    validate(updateDTO),
     updateDocument);
 
 router.route("/generate-download/:id").get(verifyJWT,generateDownloadLink);
@@ -44,6 +44,6 @@ router.route("/generate-download/:id").get(verifyJWT,generateDownloadLink);
 router.route("/download/:token").get(downloadDocument);
 
 router.route("/search").get(verifyJWT,
-    validateQuery(searchDocSchema),
+    validateQuery(searchDTO),
     searchDocument);
 export default router;

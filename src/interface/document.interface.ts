@@ -11,6 +11,7 @@ export interface IDocumentCreate {
   name: string;
   tags: string;
   userId: string;
+  path: string;
 }
 export interface IDocumentUpdate {
   id: string;
@@ -19,5 +20,3 @@ export interface IDocumentUpdate {
   path?: string;
   userId?: string;
 }
-
-

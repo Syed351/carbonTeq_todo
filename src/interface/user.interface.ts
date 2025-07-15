@@ -28,7 +28,7 @@ export interface IUserRegister {
   name: string;
   email: string;
   password: string;
-  roleId: string;
+  role: string;
 }
 
 export interface IUserResponse {
