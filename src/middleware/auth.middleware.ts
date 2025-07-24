@@ -1,11 +1,9 @@
-import {ApiError} from '../utils/ApiErrors';
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { User } from '../schema/user.schema';
-import { Roles } from '../schema/roles.schema';
-import {eq} from "drizzle-orm";
+import { container } from 'tsyringe';
 import { asyncHandler } from '../utils/asyncHandler';
-import { db } from '../db'; 
+import { AuthService } from "../services/Auth.service"
+
+
 declare global {
   namespace Express {
     interface Request {
@@ -13,33 +11,22 @@ declare global {
     }
   }
 }
-export const verifyJWT = asyncHandler (async (req: Request, res: Response, next: NextFunction) => {
-try{
-    const token = req.cookies.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+const authService = container.resolve(AuthService);
+export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const token =
+    req.cookies.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
-    if (!token ){
-        throw new ApiError(401, "Unauthorized access");
-    }
-    const decodedToken = jwt.verify(token,process.env.JWT_SECRET!)
-
-    const user = await db
-    .select({
-      id: User.id,
-      name: User.name,
-      email: User.email,
-      role: Roles.name
-    })
-    .from(User)
-    .innerJoin(Roles, eq(User.roleId, Roles.id))
-    .where(eq(User.id, (decodedToken as any).id))
-
-    if (!user ){
-        throw new ApiError(401, "Invalid Access Token");
-    }
-
-    req.user  = user[0] ;
-    next();
-}catch (error) {
-    throw new ApiError(401, (error as any)?.message || "Unauthorized access");
+  if (!token) {
+    return res.status(401).json({ message: "Access token missing" });
   }
-})
+
+  const result = await authService.validateToken(token);
+
+  if (result.isOk()) {
+    req.user = result.unwrap(); // ✅ safe unwrap
+    return next();
+  }
+
+  // ❌ Error case
+  return res.status(401).json({ message: "Unauthorized: " + result.unwrapErr() });
+});

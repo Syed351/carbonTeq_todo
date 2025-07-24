@@ -1,3 +1,5 @@
+import "reflect-metadata";
+import "./container";
 import dotenv from 'dotenv';
 dotenv.config({
   path: './.env',

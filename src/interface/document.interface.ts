@@ -1,4 +1,4 @@
-export interface IDocument {
+interface IDocument {
   id: string;
   name: string;
   tags: string|null;
@@ -7,16 +7,32 @@ export interface IDocument {
   createdat: Date;
   updatedat: Date;
 }
-export interface IDocumentCreate {
+interface PaginatedCollection<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface IDocumentCreate {
   name: string;
   tags: string;
   userId: string;
   path: string;
 }
-export interface IDocumentUpdate {
+interface IDocumentUpdate {
   id: string;
   name?: string;
   tags?: string;
   path?: string;
-  userId?: string;
+ }
+
+export {
+  IDocument,
+  PaginatedCollection,
+  IDocumentCreate,
+  IDocumentUpdate
 }

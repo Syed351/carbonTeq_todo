@@ -29,7 +29,7 @@ router.route('/upload').post(
     uploadDocument
 );
 
-router.route("/read").get(verifyJWT,rbacWithPermissions("read"),getDocuments)
+router.route("/read").get(verifyJWT,getDocuments)
 
 router.route("/:id")
 .delete(verifyJWT,rbacWithPermissions("delete"),deleteDocument)

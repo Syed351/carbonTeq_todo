@@ -1,4 +1,4 @@
-export interface IUser {
+interface IUser {
   id: string;
   name: string;
   email: string;
@@ -7,31 +7,30 @@ export interface IUser {
   refreshToken: string;
 }
 
-export interface IUserWithRole {
+interface IUserWithRole {
   id: string;
   name: string;
   email: string;
   role: string;
 }
-export interface IUserWithRefreshToken {
+interface IUserWithRefreshToken {
   id: string;
   name: string;
   email: string;
   roleId: string;
   refreshToken: string;
 }
-export interface IUserLogin {
+interface IUserLogin {
   email: string;
   password: string;
 }
-export interface IUserRegister {
+interface IUserRegister {
   name: string;
   email: string;
   password: string;
   role: string;
 }
-
-export interface IUserResponse {
+interface IUserResponse {
   user: {
     id: string;
     name: string;
@@ -40,4 +39,13 @@ export interface IUserResponse {
   };
   accessToken: string;
   refreshToken: string;
+}
+
+export {
+  IUser,
+  IUserWithRole,
+  IUserWithRefreshToken,
+  IUserLogin,
+  IUserRegister,
+  IUserResponse
 }
