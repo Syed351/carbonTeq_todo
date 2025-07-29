@@ -5,7 +5,5 @@ export const TOKENS = {
   IRoleRepository: "IRoleRepository",
   IDocumentRepository: "IDocumentRepository",
   IPermissionRepository: "IPermissionRepository",
-  ILogger: "ILogger",
-  IAuthService:"IAuthService",
-  IRbacService:"IRbacService",
+  ILogger: "ILogger"
 };

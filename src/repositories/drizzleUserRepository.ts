@@ -1,5 +1,5 @@
 import { IUserRepository } from "../interface/user.repository";
-import { IUser } from "../interface/user.interface";
+import { IUserDTO } from "../dtos/userDTO";
 import { db } from "../db";
 import { User } from "../schema/user.schema";
 import { Roles } from "../schema/roles.schema";
@@ -7,12 +7,17 @@ import { eq } from "drizzle-orm";
 import { Result } from "@carbonteq/fp";
 
 export class DrizzleUserRepository implements IUserRepository {
-  async findByEmail(email: string): Promise<Result<IUser, string>> {
+async findByEmail(email: string): Promise<Result<IUserDTO, string>> {
+  try {
     const [user] = await db.select().from(User).where(eq(User.email, email));
-    return user ? Result.Ok(user) : Result.Err("User not found with given email");
+    if (!user) return Result.Err("User not found with given email");
+    return Result.Ok(user);
+  } catch (error) {
+    return Result.Err("Failed to query user");
   }
+}
 
-  async insert(user: IUser): Promise<Result<void, string>> {
+  async insert(user: IUserDTO): Promise<Result<void, string>> {
     try {
       await db.insert(User).values(user);
       return Result.Ok(undefined);
@@ -30,12 +35,17 @@ export class DrizzleUserRepository implements IUserRepository {
     }
   }
 
-  async findById(id: string): Promise<Result<IUser, string>> {
+  async findById(id: string): Promise<Result<IUserDTO, string>> {
+    try{
     const [user] = await db.select().from(User).where(eq(User.id, id)).limit(1);
-    return user ? Result.Ok(user) : Result.Err("User not found by ID");
+    return Result.Ok(user)
+    }catch(error){
+    return Result.Err("User not found by ID");
+    }
   }
 
   async findByIdWithRole(id: string): Promise<Result<{ id: string; name: string; email: string; role: string }, string>> {
+  try {
     const result = await db
       .select({
         id: User.id,
@@ -50,5 +60,9 @@ export class DrizzleUserRepository implements IUserRepository {
     return result[0]
       ? Result.Ok(result[0])
       : Result.Err("User with role not found by ID");
+
+  } catch (error) {
+    return Result.Err("Database error while fetching user with role");
   }
 }
+};

@@ -28,8 +28,7 @@ export const validateQuery = (schema: ZodSchema) => (
     const message = result.error.errors.map(e => e.message).join(", ");
     throw new ApiError(400, message);
   }
-
-  req.query = result.data; // ✅ use validated data
+  (req as any).validatedQuery = result.data;
   next();
 };
 export const validateParams = (schema: ZodSchema) => (

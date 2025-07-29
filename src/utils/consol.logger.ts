@@ -1,7 +1,7 @@
 import pino from "pino";
 import { ILogger } from "../interface/logger.interface";
 
-const pinoInstance = pino({
+export const pinoInstance = pino({
   transport: {
     target: "pino-pretty", // for development logs
     options: {
@@ -12,7 +12,17 @@ const pinoInstance = pino({
   },
 });
 
-export class PinoLogger implements ILogger {
+export class 
+
+
+
+
+
+
+
+
+
+PinoLogger implements ILogger {
   info(message: string, meta?: any): void {
     console.log(`[INFO]: ${message}`, meta ?? "");
   }

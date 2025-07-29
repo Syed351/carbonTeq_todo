@@ -1,16 +1,15 @@
 import { Result, Option } from "@carbonteq/fp";
 import { db } from "../db";
 import { Documents } from "../schema/document.schema";
-import { eq, and, ilike ,sql , desc} from "drizzle-orm";
-import { IDocument, IDocumentCreate, IDocumentUpdate , PaginatedCollection } from "../interface/document.interface";
+import { eq, or , ilike ,sql , desc} from "drizzle-orm";
+import { IDocumentDTO, IDocumentCreateDTO, IDocumentUpdateDTO , PaginatedCollection } from "../dtos/documentDTO";
 import { IDocumentRepository } from "../interface/document.repository";
-import { PaginationInput } from "../dtos/pagination.dto"
 import { v4 as uuidv4 } from "uuid";
 
 
 
 export class DrizzleDocumentRepository implements IDocumentRepository {
-  async create(doc: IDocumentCreate): Promise<Result<void, string>> {
+  async create(doc: IDocumentCreateDTO): Promise<Result<void, string>> {
     try {
       await db.insert(Documents).values({
         id: uuidv4(),
@@ -26,7 +25,7 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
         return Result.Err("Failed to insert document into database");
     }
   }
-async findByUserId(userId: string): Promise<Result<IDocument[], string>> {
+async findByUserId(userId: string): Promise<Result<IDocumentDTO[], string>> {
   return db
     .select()
     .from(Documents)
@@ -39,7 +38,7 @@ async findByUserId(userId: string): Promise<Result<IDocument[], string>> {
 
 
 
-  async findAll(): Promise<Result<IDocument[], string>> {
+  async findAll(): Promise<Result<IDocumentDTO[], string>> {
     try {
       const docs = await db.select().from(Documents);
       return Result.Ok(docs);
@@ -49,7 +48,7 @@ async findByUserId(userId: string): Promise<Result<IDocument[], string>> {
   }
 
 
-async update(id: string, data: IDocumentUpdate): Promise<Result<void, string>> {
+async update(id: string, data: IDocumentUpdateDTO): Promise<Result<void, string>> {
   try {
     const updated = await db
       .update(Documents)
@@ -89,22 +88,26 @@ async update(id: string, data: IDocumentUpdate): Promise<Result<void, string>> {
 }
 
 
-    async searchByTags(tags: string[]): Promise<Result<IDocument[], string>> {
-    try {
-      if (tags.length === 0) {
-        const allDocs = await db.select().from(Documents);
-        return Result.Ok(allDocs);
-      }
-
-      const conditions = tags.map(tag => ilike(Documents.tags, `%${tag}%`));
-      const results = await db.select().from(Documents).where(and(...conditions));
-      return Result.Ok(results);
-    } catch {
-      return Result.Err("Failed to search documents by tags");
+    async searchByTags(tags: string[]): Promise<Result<IDocumentDTO[], string>> {
+  try {
+    if (tags.length === 0) {
+      const allDocs = await db.select().from(Documents);
+      return Result.Ok(allDocs);
     }
-  }
 
- async findById(id: string): Promise<Result<IDocument, string>> {
+    const conditions = tags.map(tag => ilike(Documents.tags, `%${tag}%`));
+    const results = await db
+      .select()
+      .from(Documents)
+      .where(or(...conditions)); // ✅ FIXED: use `or` not `and`
+
+    return Result.Ok(results);
+  } catch {
+    return Result.Err("Failed to search documents by tags");
+  }
+}
+
+ async findById(id: string): Promise<Result<IDocumentDTO, string>> {
   // Wrap the DB query in a promise that resolves Result
   return db
     .select()
@@ -123,7 +126,7 @@ async update(id: string, data: IDocumentUpdate): Promise<Result<void, string>> {
   async findAllPaginated(
     page: number,
     limit: number
-  ): Promise<Result<PaginatedCollection<IDocument>, string>> {
+  ): Promise<Result<PaginatedCollection<IDocumentDTO>, string>> {
     try {
       const offset = (page - 1) * limit;
 

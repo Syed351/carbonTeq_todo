@@ -6,7 +6,7 @@ import { DocumentService } from "../services/document.service";
 import { matchRes } from "@carbonteq/fp";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiErrors";
-import { paginationDTO } from "../dtos/pagination.dto";
+import { paginationValidate } from "../validations/pagination.validate";
 
 const documentService = container.resolve(DocumentService);
 
@@ -26,7 +26,7 @@ const uploadDocument = asyncHandler(async (req: Request, res: Response) => {
 
 // Get paginated documents
 const getDocuments = asyncHandler(async (req: Request, res: Response) => {
-  const parseResult = paginationDTO.safeParse(req.query);
+  const parseResult = paginationValidate.safeParse(req.query);
 
   if (!parseResult.success) {
     return res.status(400).json(new ApiResponse(400, {}, "Invalid pagination input"));

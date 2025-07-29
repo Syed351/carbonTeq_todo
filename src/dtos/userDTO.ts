@@ -1,4 +1,4 @@
-interface IUser {
+interface IUserDTO {
   id: string;
   name: string;
   email: string;
@@ -7,30 +7,30 @@ interface IUser {
   refreshToken: string;
 }
 
-interface IUserWithRole {
+interface IUserWithRoleDTO {
   id: string;
   name: string;
   email: string;
   role: string;
 }
-interface IUserWithRefreshToken {
+interface IUserWithRefreshTokenDTO {
   id: string;
   name: string;
   email: string;
   roleId: string;
   refreshToken: string;
 }
-interface IUserLogin {
+interface IUserLoginDTO {
   email: string;
   password: string;
 }
-interface IUserRegister {
+interface IUserRegisterDTO {
   name: string;
   email: string;
   password: string;
   role: string;
 }
-interface IUserResponse {
+interface IUserResponseDTO {
   user: {
     id: string;
     name: string;
@@ -42,10 +42,10 @@ interface IUserResponse {
 }
 
 export {
-  IUser,
-  IUserWithRole,
-  IUserWithRefreshToken,
-  IUserLogin,
-  IUserRegister,
-  IUserResponse
+  IUserDTO,
+  IUserWithRoleDTO,
+  // IUserWithRefreshTokenDTO,
+  IUserLoginDTO,
+  IUserRegisterDTO,
+  IUserResponseDTO
 }

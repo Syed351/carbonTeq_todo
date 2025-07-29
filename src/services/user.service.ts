@@ -1,16 +1,16 @@
 // services/user.service.ts
 import { inject, injectable } from "tsyringe";
 import { Result } from "@carbonteq/fp";
+import { safe } from "../utils/safe.util";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { IUserRepository } from "../interface/user.repository";
 import { IRoleRepository } from "../interface/userRole.repository";
 import { ILogger } from "../interface/logger.interface";
-import { IUserRegister, IUserLogin, IUserResponse,IUser } from "../interface/user.interface";
+import { IUserRegisterDTO, IUserLoginDTO, IUserResponseDTO } from "../dtos/userDTO";
 import { generateTokens } from "../utils/jwt";
 import { TOKENS } from "../token";
-import jwt from 'jsonwebtoken';
-import { LoginDTO } from "../dtos/user.dto";
+import jwt from "jsonwebtoken";
 
 @injectable()
 export class UserService {
@@ -20,115 +20,150 @@ export class UserService {
     @inject(TOKENS.ILogger) private logger: ILogger
   ) {}
 
-async registerUser(payload: IUserRegister): Promise<Result<IUserResponse, string>> {
-  const { name, email, password, role } = payload;
-  this.logger.info("Registering user", { email });
+  async registerUser(payload: IUserRegisterDTO): Promise<Result<IUserResponseDTO, string>> {
+    const { name, email, password, role } = payload;
+    this.logger.info("Registering user", { email });
 
-  return await Result.Ok(email).flatMap((email) =>
-      this.userRepo.findByEmail(email).then((existing) =>
-        existing ? Result.Err("User already exists") : Result.Ok(payload)
-      )).flatMap(() =>
-      this.roleRepo.findByName(role).then((roleData) =>
-        roleData ? Result.Ok(roleData) : Result.Err("Invalid role provided")
-      )).flatMap(async (roleData) => {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = {
-        id: uuidv4(),
-        name,
-        email,
-        password: hashedPassword,
-        roleId: roleData.id,
-        refreshToken: "",
-      };
-      return this.userRepo.insert(user).then(() => Result.Ok(user));
-    }).flatMap((user) => {
-      const tokens = generateTokens({ id: user.id, name: user.name, email: user.email });
-      return this.userRepo
-        .updateRefreshToken(user.id, tokens.refreshToken)
-        .then(() => Result.Ok({ user, tokens }));
-    }).map(({ user, tokens }) => {
-      this.logger.info("User registered successfully", { userId: user.id });
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role,
-        },
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      };
-    }).toPromise();
-}
- 
-loginUser = async (data: IUserLogin): Promise<Result<IUserResponse, string>> => {
-  return Result.Ok(data).flatMap((payload) => {
-      const validated = LoginDTO.safeParse(payload);
-      return validated.success
-        ? Result.Ok(validated.data)
-        : Result.Err("Invalid input");
-    }).flatMap((validated) =>
-      this.userRepo.findByEmail(validated.email).then((userRes) =>
-        userRes.isErr()
-          ? Result.Err("User not found")
-          : Result.Ok({ validated, user: userRes.unwrap() })
-      )
-    ).flatMap(({ validated, user }) =>
-      bcrypt.compare(validated.password, user.password).then((isMatch) =>
-        isMatch
-          ? Result.Ok({ validated, user })
-          : Result.Err("Invalid password")
-      )
-    ).map(({ user }) => {
-      const { accessToken, refreshToken } = generateTokens(user);
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.roleId,
-        },
-        accessToken,
-        refreshToken,
-      };
-    }).toPromise();
-};
+    return await Result.Ok(email)
+      .flatMap(async (email) => {
+        this.logger.debug("Checking for existing user", { email });
+        (await this.userRepo.findByEmail(email)).flatMap((existing)=> 
+        existing ? Result.Err("User already exists.  ") : Result.Ok(payload)
+        )
+        return Result.Ok(payload);
+      })
 
-refreshAccessToken = async (token: string): Promise<Result<IUserResponse, string>> => {
-  const result = Result.Ok(token).flatMap((t) => {
-      const decoded = jwt.decode(t);
-      return (decoded && typeof decoded === "object" && "id" in decoded)
-        ? Result.Ok(decoded as { id: string })
-        : Result.Err("Invalid refresh token");
-    }).flatMap(() => {
-      const verified = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!);
-      return (verified && typeof verified === "object" && "id" in verified)
-        ? Result.Ok(verified as { id: string })
-        : Result.Err("Invalid refresh token");
-    });
-  if (result.isErr()) return Promise.resolve(Result.Err(result.unwrapErr()));
-  const { id } = result.unwrap();
-  return this.userRepo.findById(id).then((userRes) =>
-    userRes.map((user) => {
-      const { accessToken, refreshToken } = generateTokens(user);
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.roleId,
-        },
-        accessToken,
-        refreshToken,
-      };
-    })
-  );
-};
 
+
+      .flatMap(() => {
+        this.logger.debug("Fetching role", { role });
+        return this.roleRepo.findByName(role)
+      })
+      .flatMap(async (roleData) => {
+        this.logger.debug("Hashing password", { email });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = {
+          id: uuidv4(),
+          name,
+          email,
+          password: hashedPassword,
+          roleId: roleData.id,
+          refreshToken: "",
+        };
+        this.logger.debug("Inserting user", { userId: user.id, email });
+        return this.userRepo.insert(user).then(() => Result.Ok(user));
+      })
+      .flatMap(async (user) => {
+        this.logger.debug("Generating tokens", { userId: user.id });
+        const tokens = generateTokens({ id: user.id, name: user.name, email: user.email });
+        await this.userRepo.updateRefreshToken(user.id, tokens.refreshToken);
+        this.logger.info("Refresh token updated", { userId: user.id });
+        return Result.Ok({ user, tokens });
+      })
+      .map(({ user, tokens }) => {
+        this.logger.info("User registered successfully", { userId: user.id, email });
+        return {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role,
+          },
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        };
+      })
+      .mapErr((err) => {
+        this.logger.error("User registration failed", { error: err, email });
+        return err;
+      })
+      .toPromise();
+  }
+
+  async loginUser(data: IUserLoginDTO): Promise<Result<IUserResponseDTO, string>> {
+    this.logger.info("User login attempt", { email: data.email });
+
+    return Result.Ok(data)
+      .flatMap(async (input) => {
+        this.logger.debug("Fetching user by email", { email: input.email });
+        const userRes = await this.userRepo.findByEmail(input.email);
+        return userRes.map((user) => ({ input, user }));
+      })
+      .flatMap(async ({ input, user }) => {
+        this.logger.debug("Comparing passwords", { email: input.email });
+        const isMatch = await bcrypt.compare(input.password, user.password);
+        if (!isMatch) {
+          this.logger.warn("Invalid password attempt", { email: input.email });
+          return Result.Err("Invalid password");
+        }
+        return Result.Ok(user);
+      })
+      .map((user) => {
+        this.logger.debug("Generating tokens for login", { userId: user.id });
+        const { accessToken, refreshToken } = generateTokens(user);
+        this.logger.info("User logged in successfully", { userId: user.id, email: user.email });
+        return {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.roleId,
+          },
+          accessToken,
+          refreshToken,
+        };
+      })
+      .mapErr((err) => {
+        this.logger.error("User login failed", { error: err, email: data.email });
+        return err;
+      })
+      .toPromise();
+  }
+
+  async refreshAccessToken(token: string): Promise<Result<IUserResponseDTO, string>> {
+    this.logger.info("Refreshing access token");
+
+    return Result.Ok(token)
+      .flatMap(() => {
+        this.logger.debug("Verifying refresh token");
+        return safe(() => jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!), "Token verification failed")
+          .flatMap((verified) =>
+            typeof verified === "object" && "id" in verified
+              ? Result.Ok(verified as { id: string })
+              : Result.Err("Invalid refresh token")
+          );
+      })
+      .flatMap((verified) => {
+        this.logger.debug("Fetching user by ID", { userId: verified.id });
+        return this.userRepo.findById(verified.id);
+      })
+      .flatMap((user) => {
+        this.logger.debug("Generating new tokens", { userId: user.id });
+        const { accessToken, refreshToken } = generateTokens(user);
+        return this.userRepo.updateRefreshToken(user.id, refreshToken).then(() => {
+          this.logger.info("Refresh token updated", { userId: user.id });
+          return Result.Ok({
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.roleId,
+            },
+            accessToken,
+            refreshToken,
+          });
+        });
+      })
+      .mapErr((err) => {
+        this.logger.error("Token refresh failed", { error: err });
+        return err;
+      })
+      .toPromise();
+  }
 
   async logoutUser(userId: string): Promise<void> {
-    this.logger.info(`Logging out user with ID: ${userId}`);
+    this.logger.info("Logging out user", { userId });
     await this.userRepo.updateRefreshToken(userId, "");
-    this.logger.info(`User logged out: ${userId}`);
+    this.logger.info("User logged out successfully", { userId });
   }
 }

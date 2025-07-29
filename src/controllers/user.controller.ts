@@ -3,8 +3,9 @@ import { container } from "tsyringe";
 import { UserService } from "../services/user.service";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
+import { LoginValidate } from "../validations/user.validat";
 import { matchRes } from "@carbonteq/fp";
-import { IUserResponse } from "../interface/user.interface";
+import { IUserResponseDTO } from "../dtos/userDTO";
 
 const userService = container.resolve(UserService);
 
@@ -12,18 +13,32 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.registerUser(req.body);
 
   return matchRes(result, {
-    Ok: (data: IUserResponse) =>
+    
+    Ok: (data: IUserResponseDTO) =>
       res.status(201).json(new ApiResponse(201, data, "Registered successfully")),
     Err: (err) =>
+      
       res.status(400).json(new ApiResponse(400, {}, err)),
+      
+      
   });
+  
 });
 
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const result = await userService.loginUser(req.body);
+  const parseResult = LoginValidate.safeParse(req.body);
+
+  if(!parseResult.success){
+    return res
+    .status(400)
+    .json(new ApiResponse(400,{},"Invalid Input"))
+  }
+
+  const data = parseResult.data;
+  const result = await userService.loginUser(data);
 
   return matchRes(result, {
-    Ok: (data: IUserResponse) => {
+    Ok: (data: IUserResponseDTO) => {
       const options = { httpOnly: true, secure: true };
 
       return res
@@ -41,7 +56,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.refreshAccessToken(token);
 
   return matchRes(result, {
-    Ok: (data: IUserResponse) => {
+    Ok: (data: IUserResponseDTO) => {
       const options = { httpOnly: true, secure: true };
 
       return res

@@ -1,4 +1,4 @@
-interface IDocument {
+interface IDocumentDTO {
   id: string;
   name: string;
   tags: string|null;
@@ -17,13 +17,13 @@ interface PaginatedCollection<T> {
   };
 }
 
-interface IDocumentCreate {
+interface IDocumentCreateDTO {
   name: string;
   tags: string;
   userId: string;
   path: string;
 }
-interface IDocumentUpdate {
+interface IDocumentUpdateDTO {
   id: string;
   name?: string;
   tags?: string;
@@ -31,8 +31,8 @@ interface IDocumentUpdate {
  }
 
 export {
-  IDocument,
+  IDocumentDTO,
   PaginatedCollection,
-  IDocumentCreate,
-  IDocumentUpdate
+  IDocumentCreateDTO,
+  IDocumentUpdateDTO
 }

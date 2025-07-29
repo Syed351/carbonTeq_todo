@@ -8,15 +8,15 @@ import {
 } from '../controllers/user.controller';
 import { verifyJWT } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { RegisterDTO, LoginDTO } from '../dtos/user.dto';
+import { RegisterValidate, LoginValidate } from '../validations/user.validat';
 
 
 
 const router = Router();
 
-router.route('/register').post(validate(RegisterDTO),registerUser);
+router.route('/register').post(validate(RegisterValidate),registerUser);
 
-router.route('/login').post(validate(LoginDTO),loginUser);
+router.route('/login').post(validate(LoginValidate),loginUser);
 
 router.route('/logout').post(verifyJWT, logoutUser);
 
