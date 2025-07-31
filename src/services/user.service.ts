@@ -10,6 +10,7 @@ import { ILogger } from "../interface/logger.interface";
 import { IUserRegisterDTO, IUserLoginDTO, IUserResponseDTO } from "../dtos/userDTO";
 import { generateTokens } from "../utils/jwt";
 import { TOKENS } from "../token";
+import { UserEntity } from "../entities/user.entity"; 
 import jwt from "jsonwebtoken";
 
 @injectable()
@@ -27,32 +28,33 @@ export class UserService {
     return await Result.Ok(email)
       .flatMap(async (email) => {
         this.logger.debug("Checking for existing user", { email });
-        (await this.userRepo.findByEmail(email)).flatMap((existing)=> 
-        existing ? Result.Err("User already exists.  ") : Result.Ok(payload)
-        )
-        return Result.Ok(payload);
+       const emailCheck = await this.userRepo.findByEmail(email)
+       return emailCheck.isOk() 
+        ? Result.Err("User already exists")
+        : Result.Ok(role);
       })
-
-
 
       .flatMap(() => {
         this.logger.debug("Fetching role", { role });
         return this.roleRepo.findByName(role)
       })
       .flatMap(async (roleData) => {
-        this.logger.debug("Hashing password", { email });
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = {
-          id: uuidv4(),
-          name,
-          email,
-          password: hashedPassword,
-          roleId: roleData.id,
-          refreshToken: "",
-        };
-        this.logger.debug("Inserting user", { userId: user.id, email });
-        return this.userRepo.insert(user).then(() => Result.Ok(user));
-      })
+  this.logger.debug("Hashing password", { email });
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const userEntity = UserEntity.create({
+    id: uuidv4(),
+    name,
+    email,
+    password: hashedPassword,
+    roleId: roleData.id,
+    refreshToken: "",
+  });
+
+  this.logger.debug("Inserting user", { userId: userEntity.id, email });
+
+  return this.userRepo.insert(userEntity).then(() => Result.Ok(userEntity));
+})
       .flatMap(async (user) => {
         this.logger.debug("Generating tokens", { userId: user.id });
         const tokens = generateTokens({ id: user.id, name: user.name, email: user.email });

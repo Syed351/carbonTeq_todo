@@ -1,25 +1,29 @@
+// repositories/impl/drizzle-user.repository.ts
+
 import { IUserRepository } from "../interface/user.repository";
-import { IUserDTO } from "../dtos/userDTO";
 import { db } from "../db";
 import { User } from "../schema/user.schema";
 import { Roles } from "../schema/roles.schema";
 import { eq } from "drizzle-orm";
 import { Result } from "@carbonteq/fp";
+import { UserEntity } from "../entities/user.entity";
 
 export class DrizzleUserRepository implements IUserRepository {
-async findByEmail(email: string): Promise<Result<IUserDTO, string>> {
-  try {
-    const [user] = await db.select().from(User).where(eq(User.email, email));
-    if (!user) return Result.Err("User not found with given email");
-    return Result.Ok(user);
-  } catch (error) {
-    return Result.Err("Failed to query user");
-  }
-}
-
-  async insert(user: IUserDTO): Promise<Result<void, string>> {
+  async findByEmail(email: string): Promise<Result<UserEntity, string>> {
     try {
-      await db.insert(User).values(user);
+      const [user] = await db.select().from(User).where(eq(User.email, email)).limit(1);
+      if (!user) return Result.Err("User not found with given email");
+
+      const entity = UserEntity.fromObject(user);
+      return Result.Ok(entity);
+    } catch (error) {
+      return Result.Err("Failed to query user by email");
+    }
+  }
+
+  async insert(user: UserEntity): Promise<Result<void, string>> {
+    try {
+      await db.insert(User).values(user.toObject());
       return Result.Ok(undefined);
     } catch (error) {
       return Result.Err("Failed to insert user");
@@ -35,34 +39,37 @@ async findByEmail(email: string): Promise<Result<IUserDTO, string>> {
     }
   }
 
-  async findById(id: string): Promise<Result<IUserDTO, string>> {
-    try{
-    const [user] = await db.select().from(User).where(eq(User.id, id)).limit(1);
-    return Result.Ok(user)
-    }catch(error){
-    return Result.Err("User not found by ID");
+  async findById(id: string): Promise<Result<UserEntity, string>> {
+    try {
+      const [user] = await db.select().from(User).where(eq(User.id, id)).limit(1);
+      if (!user) return Result.Err("User not found by ID");
+
+      const entity = UserEntity.fromObject(user);
+      return Result.Ok(entity);
+    } catch (error) {
+      return Result.Err("Failed to query user by ID");
     }
   }
 
   async findByIdWithRole(id: string): Promise<Result<{ id: string; name: string; email: string; role: string }, string>> {
-  try {
-    const result = await db
-      .select({
-        id: User.id,
-        name: User.name,
-        email: User.email,
-        role: Roles.name,
-      })
-      .from(User)
-      .innerJoin(Roles, eq(User.roleId, Roles.id))
-      .where(eq(User.id, id));
+    try {
+      const result = await db
+        .select({
+          id: User.id,
+          name: User.name,
+          email: User.email,
+          role: Roles.name,
+        })
+        .from(User)
+        .innerJoin(Roles, eq(User.roleId, Roles.id))
+        .where(eq(User.id, id))
+        .limit(1);
 
-    return result[0]
-      ? Result.Ok(result[0])
-      : Result.Err("User with role not found by ID");
+      if (!result[0]) return Result.Err("User with role not found by ID");
 
-  } catch (error) {
-    return Result.Err("Database error while fetching user with role");
+      return Result.Ok(result[0]);
+    } catch (error) {
+      return Result.Err("Database error while fetching user with role");
+    }
   }
 }
-};

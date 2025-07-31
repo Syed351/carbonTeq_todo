@@ -1,11 +1,11 @@
 import { Result } from "@carbonteq/fp";
-import { IUserDTO } from "../dtos/userDTO";
+import { UserEntity } from "../entities/user.entity"
 
 export interface IUserRepository {
-  findByEmail(email: string): Promise<Result<IUserDTO, string>>;
-  insert(user: IUserDTO): Promise<Result<void, string>>;
+  findByEmail(email: string): Promise<Result<UserEntity, string>>;
+  insert(user: UserEntity): Promise<Result<void, string>>;
   updateRefreshToken(userId: string, refreshToken: string): Promise<Result<void, string>>;
-  findById(id: string): Promise<Result<IUserDTO, string>>;
+  findById(id: string): Promise<Result<UserEntity, string>>;
   findByIdWithRole(id: string): Promise<Result<{
     id: string;
     name: string;
@@ -13,3 +13,4 @@ export interface IUserRepository {
     role: string;
   }, string>>;
 }
+

@@ -1,7 +1,7 @@
-import { Roles } from "../schema/roles.schema";
-import { Result } from "@carbonteq/fp"
-
+// interfaces/role.repository.ts
+import { Result } from "@carbonteq/fp";
+import { RoleEntity } from "../entities/role.entity";
 
 export interface IRoleRepository {
-  findByName(roleName: string): Promise<Result<typeof Roles.$inferSelect , string>>;
+  findByName(roleName: string): Promise<Result<RoleEntity, string>>;
 }

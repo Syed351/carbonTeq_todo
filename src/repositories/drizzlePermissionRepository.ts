@@ -17,7 +17,7 @@ export class DrizzlePermissionRepository implements IPermissionRepository {
       .from(Permissions)
       .where(and(eq(Permissions.roleId, role.id), eq(Permissions.action, action)));
 
-    return !!permission?.allowed;
+    return permission?.allowed;
   }
 }
 

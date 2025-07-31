@@ -1,15 +1,15 @@
-// IDocumentRepository.ts
 import { Result } from "@carbonteq/fp";
-import { IDocumentDTO, IDocumentCreateDTO, IDocumentUpdateDTO , PaginatedCollection } from "../dtos/documentDTO";
+import { DocumentEntity } from "../entities/document.entity";
+import { PaginatedCollection } from "../dtos/documentDTO";
 
 export interface IDocumentRepository {
-  create(doc: IDocumentCreateDTO): Promise<Result<void, string>>;
-  findById(id: string): Promise<Result<IDocumentDTO,string >>;
-  findByUserId(userId: string): Promise<Result<IDocumentDTO[],String>>;
-  findAll(): Promise<Result<IDocumentDTO[], string>>;
+  create(doc: DocumentEntity): Promise<Result<void, string>>;
+  findById(id: string): Promise<Result<DocumentEntity, string>>;
+  findByUserId(userId: string): Promise<Result<DocumentEntity[], string>>;
+  findAll(): Promise<Result<DocumentEntity[], string>>;
   delete(documentId: string, userId: string, role: string): Promise<Result<void, string>>;
-  update(id: string, data: IDocumentUpdateDTO): Promise<Result<void, string>>;
-  searchByTags(tags: string[]): Promise<Result<IDocumentDTO[], string>>;
-  findAllPaginated(page: number, limit: number): Promise<Result<PaginatedCollection<IDocumentDTO>, string>>
+  update(doc: DocumentEntity): Promise<Result<void, string>>;
+  searchByTags(tags: string[]): Promise<Result<DocumentEntity[], string>>;
+  findAllPaginated(page: number, limit: number): Promise<Result<PaginatedCollection<DocumentEntity>, string>>;
   countAll(): Promise<Result<number, string>>;
 }

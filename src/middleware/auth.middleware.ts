@@ -27,6 +27,6 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
     return next();
   }
 
-  // ❌ Error case
+  // Error case
   return res.status(401).json({ message: "Unauthorized: " + result.unwrapErr() });
 });

@@ -1,13 +1,29 @@
-interface IDocumentDTO {
+// dtos/documentDTO.ts
+export interface IDocumentDTO {
   id: string;
   name: string;
-  tags: string|null;
+  tags: string | null;
   path: string;
   userId: string;
   createdat: Date;
   updatedat: Date;
 }
-interface PaginatedCollection<T> {
+
+export interface IDocumentCreateDTO {
+  name: string;
+  tags: string | null;
+  userId: string;
+  path: string;
+}
+
+export interface IDocumentUpdateDTO {
+  id: string;
+  name?: string;
+  tags?: string | null;
+  path?: string;
+}
+
+export interface PaginatedCollection<T> {
   data: T[];
   meta: {
     total: number;
@@ -16,23 +32,4 @@ interface PaginatedCollection<T> {
     totalPages: number;
   };
 }
-
-interface IDocumentCreateDTO {
-  name: string;
-  tags: string;
-  userId: string;
-  path: string;
-}
-interface IDocumentUpdateDTO {
-  id: string;
-  name?: string;
-  tags?: string;
-  path?: string;
- }
-
-export {
-  IDocumentDTO,
-  PaginatedCollection,
-  IDocumentCreateDTO,
-  IDocumentUpdateDTO
-}
+ 

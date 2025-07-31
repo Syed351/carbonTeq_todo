@@ -13,13 +13,13 @@ interface IUserWithRoleDTO {
   email: string;
   role: string;
 }
-interface IUserWithRefreshTokenDTO {
-  id: string;
-  name: string;
-  email: string;
-  roleId: string;
-  refreshToken: string;
-}
+// interface IUserWithRefreshTokenDTO {
+//   id: string;
+//   name: string;
+//   email: string;
+//   roleId: string;
+//   refreshToken: string;
+// }
 interface IUserLoginDTO {
   email: string;
   password: string;

@@ -10,7 +10,7 @@ import { paginationValidate } from "../validations/pagination.validate";
 
 const documentService = container.resolve(DocumentService);
 
-// Upload
+
 const uploadDocument = asyncHandler(async (req: Request, res: Response) => {
   const file = req.file!;
   const user = req.user!;
@@ -24,7 +24,7 @@ const uploadDocument = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Get paginated documents
+
 const getDocuments = asyncHandler(async (req: Request, res: Response) => {
   const parseResult = paginationValidate.safeParse(req.query);
 
@@ -42,7 +42,7 @@ const getDocuments = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Delete
+
 const deleteDocument = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!;
   const documentId = req.params.id;
@@ -58,7 +58,7 @@ const deleteDocument = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Update
+
 const updateDocument = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!;
   const documentId = req.params.id;
@@ -72,7 +72,7 @@ const updateDocument = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Generate Download Link
+
 const generateDownloadLink = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user!;
   const documentId = req.params.id;
@@ -85,7 +85,7 @@ const generateDownloadLink = asyncHandler(async (req: Request, res: Response) =>
   });
 });
 
-// Download
+
 const downloadDocument = asyncHandler(async (req: Request, res: Response) => {
   const token = req.params.token;
 
@@ -106,7 +106,7 @@ const downloadDocument = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Search
+
 const searchDocument = asyncHandler(async (req: Request, res: Response) => {
   const { tags } = req.query;
 
