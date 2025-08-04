@@ -1,5 +1,8 @@
 // entities/role.entity.ts
-import type { IRole } from "../dtos/RoleDTO";
+export interface IRole {
+  id: string;
+  name: string;
+}
 
 export class RoleEntity implements IRole {
   constructor(public id: string, public name: string) {}
