@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node-dev --respawn src/main.ts serve",
     "seed": "ts-node src/seeds/seed.ts",
     "drizzle:push": "drizzle-kit push",
     "drizzle:studio": "drizzle-kit studio",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@carbonteq/fp": "^0.8.2",
     "bcrypt": "^6.0.0",
+    "commander": "^14.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.44.2",

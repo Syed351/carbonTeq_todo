@@ -1,6 +1,7 @@
 // src/main.ts
 import { Command } from "commander";
 import { serve } from "./commands/serve";
+import { seed } from "./commands/seed"
 
 
 const program = new Command();
@@ -15,6 +16,14 @@ program
   .description("Start the Express server")
   .action(() => {
     serve(); // Start Express app
+  });
+
+program
+  .command("seed")
+  .description("Seed the database with initial roles and permissions")
+  .action(async () => {
+    await seed();
+    process.exit(0);
   });
 
 program.parse();

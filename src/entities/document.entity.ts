@@ -1,6 +1,6 @@
 // entities/document.entity.ts
 
-export interface IDocument {
+interface IDocument {
   id: string;
   name: string;
   tags: string | null;
@@ -10,7 +10,7 @@ export interface IDocument {
   updatedat: Date;
 }
 
-export interface IDocumentCreate {
+interface IDocumentCreate {
   name: string;
   tags: string | null;
   userId: string;
