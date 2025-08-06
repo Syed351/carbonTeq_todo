@@ -1,6 +1,6 @@
-import { db } from '../db';
-import { Roles } from '../schema/roles.schema';
-import { Permissions } from '../schema/permission.schema';
+import { db } from '../infrastructure/config/db';
+import { Roles } from '../infrastructure/schema/roles.schema';
+import { Permissions } from '../infrastructure/schema/permission.schema';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function seed() {

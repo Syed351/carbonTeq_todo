@@ -1,11 +1,11 @@
 // src/commands/serve.ts
 import "reflect-metadata";
-import "../container";
+import "../infrastructure/config/DI/container";
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
-import { db } from "../db";
-import { app } from "../app";
+import { db } from "../infrastructure/config/db";
+import { app } from "../web/app";
 
 export const serve = async () => {
   const PORT = process.env.PORT || 3000;
@@ -22,3 +22,4 @@ export const serve = async () => {
     process.exit(1);
   }
 };
+
