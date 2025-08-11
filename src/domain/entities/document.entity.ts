@@ -22,7 +22,6 @@ export class DocumentEntity implements IDocument {
     public updatedat: Date
   ) {}
 
-  // ✅ Getters
   get name(): string {
     return this._name;
   }
@@ -35,7 +34,6 @@ export class DocumentEntity implements IDocument {
     return this._path;
   }
 
-  // ✅ Factory method for creating a new document
   static create(props: {
     name: string;
     tags: string | null;
@@ -64,7 +62,6 @@ export class DocumentEntity implements IDocument {
   }
 
 
-  // ✅ Update method for business logic
   update(props: Partial<Omit<IDocument, "id" | "createdat" | "userId">>): DocumentEntity {
     return new DocumentEntity(
       this.id,

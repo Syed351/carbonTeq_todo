@@ -1,11 +1,11 @@
 // container.ts
 import "reflect-metadata";
-import { PinoLogger } from '../../pinoLogger';
+import { PinoLogger } from '../../logger/pinoLogger';
 import { container } from 'tsyringe';
 import { DrizzleDocumentRepository } from '../../repo/document.repo';
 import { DrizzlePermissionRepository } from '../../repo/Permission.repo';
 import { DrizzleUserRepository } from '../../repo/user.repo';
-import { DrizzleRoleRepository } from '../../repo/drizzleRoleRepository';
+import { DrizzleRoleRepository } from '../../repo/role.repo';
 import { IUserRepository } from '../../../domain/repositories/user.repository';
 import { IDocumentRepository } from '../../../domain/repositories/document.repository';
 import { IPermissionRepository } from '../../../domain/repositories/permission.repository';

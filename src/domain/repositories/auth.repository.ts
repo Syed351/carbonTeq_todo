@@ -1,5 +1,5 @@
-import { IUserWithRoleDTO } from "../../application/dtos/user.dto";
+import { UserWithRoleEntity } from "../entities/userRole.entity";
 import { Result } from "@carbonteq/fp"
 export interface IAuthService {
-  validateToken(token: string): Promise<Result<IUserWithRoleDTO, string>>
+  validateToken(token: string): Promise<Result<UserWithRoleEntity, string>>
 }

@@ -5,7 +5,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "cli": "ts-node-dev --respawn src/main.ts ",
-    "seed": "ts-node src/seeds/seed.ts",
     "drizzle:push": "drizzle-kit push",
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:generate": "drizzle-kit generate"
@@ -23,7 +22,6 @@
     "drizzle-orm": "^0.44.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mocha": "^11.7.1",
     "multer": "^2.0.1",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
@@ -43,6 +41,7 @@
     "@types/node": "^24.0.7",
     "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.4",
+    "mocha": "^11.7.1",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0"
   }

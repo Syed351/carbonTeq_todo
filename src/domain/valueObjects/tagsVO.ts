@@ -12,12 +12,9 @@ export class TagValueObject {
 
     if (!trimmed) throw new Error("Tags cannot be empty if provided");
 
-    // Optional: Validation for allowed characters
     if (!/^[a-zA-Z0-9, ]+$/.test(trimmed)) {
       throw new Error("Tags can only contain alphanumeric characters, commas, and spaces");
     }
-
-    // Optional: Normalize
     const normalized = trimmed
       .split(",")
       .map(tag => tag.trim().toLowerCase())

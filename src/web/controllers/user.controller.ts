@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { container } from "tsyringe";
 import { UserService } from "../../application/services/user.service";
+import { AuthService } from "../../application/services/auth.service";
 import { ApiResponse } from "../../infrastructure/utils/api.response";
 import { asyncHandler } from "../../infrastructure/utils/asyncHandler";
 import { LoginValidate } from "../validations/user.validat";
@@ -8,6 +9,7 @@ import { matchRes } from "@carbonteq/fp";
 import { IUserResponseDTO } from "../../application/dtos/user.dto";
 
 const userService = container.resolve(UserService);
+const authService = container.resolve(AuthService);
 
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.registerUser(req.body);
@@ -35,7 +37,7 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const data = parseResult.data;
-  const result = await userService.loginUser(data);
+  const result = await authService.loginUser(data);
 
   return matchRes(result, {
     Ok: (data: IUserResponseDTO) => {
@@ -53,7 +55,7 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
 
 const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
-  const result = await userService.refreshAccessToken(token);
+  const result = await authService.refreshAccessToken(token);
 
   return matchRes(result, {
     Ok: (data: IUserResponseDTO) => {
@@ -70,7 +72,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const logoutUser = asyncHandler(async (req: Request, res: Response) => {
-  await userService.logoutUser(req.user.id);
+  await authService.logoutUser(req.user.id);
 
   const options = { httpOnly: true, secure: true };
 

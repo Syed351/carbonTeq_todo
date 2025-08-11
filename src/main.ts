@@ -15,7 +15,7 @@ program
   .command("serve")
   .description("Start the Express server")
   .action(() => {
-    serve(); // Start Express app
+    serve(); 
   });
 
 program

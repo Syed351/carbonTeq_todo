@@ -14,7 +14,7 @@ export const validate = (schema: ZodSchema) => (
     throw new ApiError(400, message);
   }
 
-  req.body = result.data; // ✅ use validated data
+  req.body = result.data; 
   next();
 };
 
@@ -42,7 +42,7 @@ export const validateParams = (schema: ZodSchema) => (
     throw new ApiError(400, message);
   }
 
-  req.params = result.data; // ✅ use validated data
+  req.params = result.data; 
   next();
 };
 

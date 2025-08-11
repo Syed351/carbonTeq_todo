@@ -5,7 +5,10 @@ export interface IRole {
 }
 
 export class RoleEntity implements IRole {
-  constructor(public id: string, public name: string) {}
+  constructor(
+    public id: string, 
+    public name: string
+  ) {}
 
   static create(id: string, name: string): RoleEntity {
     return new RoleEntity(id, name);

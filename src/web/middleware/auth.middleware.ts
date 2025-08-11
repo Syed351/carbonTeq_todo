@@ -23,10 +23,9 @@ export const verifyJWT = asyncHandler(async (req: Request, res: Response, next: 
   const result = await authService.validateToken(token);
 
   if (result.isOk()) {
-    req.user = result.unwrap(); // ✅ safe unwrap
+    req.user = result.unwrap(); 
     return next();
   }
 
-  // Error case
   return res.status(401).json({ message: "Unauthorized: " + result.unwrapErr() });
 });

@@ -21,7 +21,6 @@ export class UserEntity implements IUser {
     public readonly roleId: string
   ) {}
 
-  // Getters
   get name(): string {
     return this._name;
   }
@@ -38,7 +37,6 @@ export class UserEntity implements IUser {
     return this._refreshToken;
   }
 
-  // Factory method
   static create(props: {
     name: string;
     email: string;
@@ -67,7 +65,6 @@ export class UserEntity implements IUser {
     );
   }
 
-  // Convert Entity to plain object (for DB insertion)
   toObject(): IUser {
     return {
       id: this.id,

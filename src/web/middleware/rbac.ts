@@ -21,7 +21,7 @@ export const rbacWithPermissions = (action: AllowedPermissionKey) => {
     return matchRes(result, {
       Ok: () => next(),
       Err: (err) => {
-        throw new ApiError(403, err); // err = "Access denied" ya "Document not found"
+        throw new ApiError(403, err); 
       }
     });
   });
