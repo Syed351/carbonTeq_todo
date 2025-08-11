@@ -11,7 +11,7 @@ import { IDocumentRepository } from '../../../domain/repositories/document.repos
 import { IPermissionRepository } from '../../../domain/repositories/permission.repository';
 import { IRoleRepository } from '../../../domain/repositories/userRole.repository';
 import { TOKENS } from './token'; 
-import { ILogger } from "../../../application/logger.interface";
+import { ILogger } from "../../interface/logger.interface";
 
 
 

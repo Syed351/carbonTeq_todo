@@ -6,11 +6,12 @@ import { TOKENS } from "../../infrastructure/config/DI/token";
 import fs from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
-import { ILogger } from "../logger.interface";
+import { ILogger } from "../../infrastructure/interface/logger.interface";
 import { Request } from "express";
 import { inject, injectable } from "tsyringe";
 import { DocumentEntity } from "../../domain/entities/document.entity";
 import { toDTO } from "../../infrastructure/mapper/document.mapper";
+import { IDocumentService } from "../interfaces/document.inerface";
 
 interface GetDocsOptions {
   page: number;
@@ -19,7 +20,7 @@ interface GetDocsOptions {
 }
 
 @injectable()
-export class DocumentService {
+export class DocumentService implements IDocumentService {
   constructor(
     @inject(TOKENS.IDocumentRepository) private documentRepo: IDocumentRepository,
     @inject(TOKENS.IUserRepository) private userRepo: IUserRepository,
@@ -94,7 +95,11 @@ export class DocumentService {
       .toPromise();
   }
 
-  async generateDownloadLink(documentId: string, userId: string, jwtSecret: string, req: Request): Promise<Result<string, string>> {
+  async generateDownloadLink(
+    documentId: string,
+    userId: string,
+    jwtSecret: string
+  ): Promise<Result<string, string>> {
     this.logger.info("Generating download link", { documentId, userId });
 
     return Result.Ok(documentId)

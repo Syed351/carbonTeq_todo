@@ -1,9 +1,9 @@
 // src/services/impl/rbac.service.ts
 import { inject, injectable } from "tsyringe";
-import { IRbacService } from "../repositories/rbac.repository";
+import { IRbacService } from "../../application/interfaces/rbac.interface";
 import { IDocumentRepository } from "../repositories/document.repository";
 import { IPermissionRepository } from "../repositories/permission.repository";
-import { ILogger } from "../../application/logger.interface";
+import { ILogger } from "../../infrastructure/interface/logger.interface";
 import { Result } from "@carbonteq/fp"
 import { TOKENS } from "../../infrastructure/config/DI/token"
 

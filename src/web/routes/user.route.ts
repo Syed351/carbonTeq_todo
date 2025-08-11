@@ -5,7 +5,7 @@ import {
     logoutUser,
     refreshAccessToken
     
-} from '../controllers/user.controller';
+} from '../controllers/auth.controller';
 import { verifyJWT } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { RegisterValidate, LoginValidate } from '../validations/user.validat';

@@ -78,7 +78,7 @@ const generateDownloadLink = asyncHandler(async (req: Request, res: Response) =>
   const user = req.user!;
   const documentId = req.params.id;
 
-  const result = await documentService.generateDownloadLink(documentId, user.id, process.env.JWT_SECRET!, req);
+  const result = await documentService.generateDownloadLink(documentId, user.id, process.env.JWT_SECRET!);
 
   return matchRes(result, {
     Ok: (link) => res.status(200).json(new ApiResponse(200, { downloadLink: link }, "Link generated")),
